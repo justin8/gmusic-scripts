@@ -1,0 +1,4 @@
+protobuf==2.5.0
+gmusicapi
+mutagen
+youtube_dl
