@@ -9,12 +9,14 @@ import shutil
 import tempfile
 import requests
 import sys
+from exceptions import IOError
 
 import acoustid
 import youtube_dl
+import mutagen.id3
+from apiclient.discovery import build
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
-import mutagen.id3
 
 from gmwrapper import MusicManagerWrapper
 
@@ -109,12 +111,34 @@ def process_link(link, artist, title, album):
         tag_file(downloaded_file, title, artist,  album)
         upload(downloaded_file)
     finally:
-        pass
         shutil.rmtree(temp_path)
 
 
-def search(search, artist, title, album):
-    pass
+def search_for_id(search):
+    print('Searching for video...')
+    try:
+        with open('google-api-key', 'r') as f:
+            google_api_key = f.read().strip('\n')
+    except IOError:
+        print('You must provide a server Google API key on a single line in the file "google-api-key".')
+        sys.exit(1)
+
+    youtube = build('youtube', 'v3', developerKey=google_api_key)
+    search_response = youtube.search().list(q=search, part='id,snippet', maxResults=1).execute()
+
+    video_id = search_response['items'][0]['id']['videoId']
+    title = search_response['items'][0]['snippet']['title']
+
+    vprint("Found video:\n" +
+           "    ID: %s\n" % video_id +
+           "    Title: %s" % title)
+
+    return video_id
+
+
+def process_search(search, artist, title, album):
+    video_id = search_for_id(search)
+    process_link(video_id, artist, title, album)
 
 
 if __name__ == '__main__':
@@ -143,8 +167,4 @@ if __name__ == '__main__':
     if args.link:
         process_link(args.link, args.artist, args.title, args.album)
     elif args.search:
-        search(args.search, args.artist, args.title, args.album)
-    else:
-        # Shouldn't be able to get here!
-        print('You must specify either a link or a search phrase!')
-        sys.exit(1)
+        process_search(args.search, args.artist, args.title, args.album)

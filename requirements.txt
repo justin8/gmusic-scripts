@@ -5,6 +5,7 @@
 # Python requirements:
 protobuf==2.5.0
 gmusicapi
+google-api-python-client
 mutagen
 pyacoustid
 youtube_dl
