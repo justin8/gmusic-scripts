@@ -50,8 +50,8 @@ def download(link, temp_path):
 
 
 def tag_file(file_path, title, artist, album):
+    print("Tagging...")
     mp3file = MP3(file_path, ID3=EasyID3)
-
     try:
         mp3file.add_tags(ID3=EasyID3)
     except mutagen.id3.error:
@@ -63,7 +63,6 @@ def tag_file(file_path, title, artist, album):
         title = title.decode('utf-8')
     if isinstance(album, str):
         album = album.decode('utf-8')
-    print("Tagging...")
 
     mp3file['artist'] = artist
     mp3file['title'] = title
@@ -129,9 +128,8 @@ def search_for_id(search):
     video_id = search_response['items'][0]['id']['videoId']
     title = search_response['items'][0]['snippet']['title']
 
-    vprint("Found video:\n" +
-           "    ID: %s\n" % video_id +
-           "    Title: %s" % title)
+    print("Found video '%s'" % title)
+    vprint("Video ID: %s\n" % video_id)
 
     return video_id
 
