@@ -8,6 +8,7 @@ import argparse
 import re
 import shutil
 import tempfile
+import requests
 
 import acoustid
 import youtube_dl
@@ -18,10 +19,18 @@ import mutagen.id3
 from gmwrapper import MusicManagerWrapper
 
 
+requests.packages.urllib3.disable_warnings()
 ACOUSTID_API_KEY = 'TjNRZRtM'
+VERBOSE = False
+
+
+def vprint(line):
+    if VERBOSE:
+        print(line)
 
 
 def download(link, temp_path):
+    print('Downloading...')
     ydl_opts = {'format': 'bestaudio/best',
                 'outtmpl': temp_path + '/%(autonumber)s.%(ext)s',
                 'postprocessors': [{
@@ -29,6 +38,7 @@ def download(link, temp_path):
                     'preferredcodec': 'mp3',
                     'preferredquality': '320',
                 }],
+                'quiet': not VERBOSE,
                 }
 
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -51,7 +61,7 @@ def tag_file(file_path, title, artist, album):
         title = title.decode('utf-8')
     if isinstance(album, str):
         album = album.decode('utf-8')
-    print("Tagging song...")
+    print("Tagging...")
 
     mp3file['artist'] = artist
     mp3file['title'] = title
@@ -70,15 +80,15 @@ def get_song_info(file_path, title, artist, album, link):
         except:
             artist = 'Unknown' if artist is None else artist
             title = get_youtube_title(link) if title is None else title
-    print("Found song info:\n" +
-          "    Artist: %s\n" % artist +
-          "    Title: %s\n" % title +
-          "    Album: %s" % album)
+    vprint("Found song info:\n" +
+           "    Artist: %s\n" % artist +
+           "    Title: %s\n" % title +
+           "    Album: %s" % album)
     return [title, artist, album]
 
 
 def get_youtube_title(link):
-    ydl = youtube_dl.YoutubeDL()
+    ydl = youtube_dl.YoutubeDL({'quiet': not VERBOSE})
     result = ydl.extract_info(link, download=False)
     return result['title']
 
@@ -100,7 +110,7 @@ def main(link, artist, title, album):
         upload(downloaded_file)
     finally:
         pass
-        #shutil.rmtree(temp_path)
+        shutil.rmtree(temp_path)
 
 
 if __name__ == '__main__':
@@ -111,14 +121,17 @@ if __name__ == '__main__':
                           'Default artist/title will be discovered via acoustID.\n' +
                           'If no match is found via acoustID the Youtube title will be used\n' +
                           'with "Unknown" as the artist')
-#    parser.add_argument('-v', '--verbose',
-#                        help='Increase verbosity of output',
-#                        action='count')
+    parser.add_argument('-v', '--verbose',
+                        help='Increase verbosity of output',
+                        action='count')
     parser.add_argument('link', help='Link (or just the ID) to youtube video to be used')
     parser.add_argument('-a', '--artist')
     parser.add_argument('-b', '--album')
     parser.add_argument('-t', '--title')
 
     args = parser.parse_args()
+
+    if args.verbose > 0:
+        VERBOSE = True
 
     main(args.link, args.artist, args.title, args.album)
