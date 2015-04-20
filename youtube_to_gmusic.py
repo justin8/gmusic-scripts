@@ -18,7 +18,7 @@ from gmwrapper import MusicManagerWrapper
 
 
 def download(link, temp_path):
-    ydl_opts = {'format': '141/140/171',
+    ydl_opts = {'format': 'bestaudio/best',
                 'outtmpl': temp_path + '/%(autonumber)s.%(ext)s',
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
