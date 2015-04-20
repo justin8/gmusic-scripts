@@ -44,9 +44,12 @@ def tag_file(file_path, title, artist, album):
     except mutagen.id3.error:
         pass
 
-    artist = artist.decode('unicode-escape').encode('ascii', 'replace')
-    title = title.decode('unicode-escape').encode('ascii', 'replace')
-    album = album.decode('unicode-escape').encode('ascii', 'replace')
+    if isinstance(artist, str):
+        artist = artist.decode('utf-8')
+    if isinstance(title, str):
+        title = title.decode('utf-8')
+    if isinstance(album, str):
+        album = album.decode('utf-8')
     print("Tagging with:\n" +
           "    Artist: %s\n" % artist +
           "    Title: %s\n" % title +
