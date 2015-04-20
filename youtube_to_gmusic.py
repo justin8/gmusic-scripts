@@ -8,6 +8,7 @@ import argparse
 import shutil
 import tempfile
 import requests
+import sys
 
 import acoustid
 import youtube_dl
@@ -99,7 +100,7 @@ def upload(file_path):
     upload.mmw.upload(file_path)
 
 
-def main(link, artist, title, album):
+def process_link(link, artist, title, album):
     album = 'Youtube Uploads'
     try:
         temp_path = tempfile.mkdtemp()
@@ -112,18 +113,24 @@ def main(link, artist, title, album):
         shutil.rmtree(temp_path)
 
 
+def search(search, artist, title, album):
+    pass
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.description = ('Import the provided youtube link/ID to your Google Music account\n' +
-                          'Default album will be "Youtube"\n' +
-                          'Default artist/title will be discovered via acoustID.\n' +
-                          'If no match is found via acoustID the Youtube title will be used\n' +
-                          'with "Unknown" as the artist')
+    parser.description = ('Import the provided youtube link/ID to your Google Music account ' +
+                          'Default album will be "Youtube" ' +
+                          'Default artist/title will be discovered via acoustID. ' +
+                          'If no match is found via acoustID the Youtube title will be used ' +
+                          'with "Unknown" as the artist. Either link or search must be specified.')
     parser.add_argument('-v', '--verbose',
                         help='Increase verbosity of output',
                         action='count')
-    parser.add_argument('link', help='Link (or just the ID) to youtube video to be used')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-l', '--link', help='Link (or just the ID) to youtube video to be used')
+    group.add_argument('-s', '--search')
     parser.add_argument('-a', '--artist')
     parser.add_argument('-b', '--album')
     parser.add_argument('-t', '--title')
@@ -133,4 +140,11 @@ if __name__ == '__main__':
     if args.verbose > 0:
         VERBOSE = True
 
-    main(args.link, args.artist, args.title, args.album)
+    if args.link:
+        process_link(args.link, args.artist, args.title, args.album)
+    elif args.search:
+        search(args.search, args.artist, args.title, args.album)
+    else:
+        # Shouldn't be able to get here!
+        print('You must specify either a link or a search phrase!')
+        sys.exit(1)
