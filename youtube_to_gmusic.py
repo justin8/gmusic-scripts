@@ -9,12 +9,15 @@ import re
 import shutil
 import tempfile
 
+import acoustid
 import youtube_dl
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
 import mutagen.id3
 
 from gmwrapper import MusicManagerWrapper
+
+ACOUSTID_API_KEY = 'TjNRZRtM'
 
 
 def download(link, temp_path):
@@ -43,11 +46,30 @@ def tag_file(file_path, title, artist, album):
 
     artist = artist.decode('unicode-escape').encode('ascii', 'replace')
     title = title.decode('unicode-escape').encode('ascii', 'replace')
+    album = album.decode('unicode-escape').encode('ascii', 'replace')
+    print("Tagging with:\n" +
+          "    Artist: %s\n" % artist +
+          "    Title: %s\n" % title +
+          "    Album: %s" % album)
 
     mp3file['artist'] = artist
     mp3file['title'] = title
     mp3file['album'] = album
     mp3file.save()
+
+
+def get_song_info(file_path, title, artist, album):
+    album = 'Youtube' if album is None else album
+    if not title or not artist:
+        match = acoustid.match(ACOUSTID_API_KEY, file_path)
+        result = match.next()
+        artist = result[3] if artist is None else artist
+        title = result[2] if title is None else title
+    print("Found song info:\n" +
+          "    Artist: %s\n" % artist +
+          "    Title: %s\n" % title +
+          "    Album: %s" % album)
+    return [title, artist, album]
 
 
 def upload(file_path):
@@ -57,18 +79,12 @@ def upload(file_path):
     upload.mmw.upload(file_path)
 
 
-def get_title(link):
-    # TODO: Find 'get-title' option in youtube_dl
-    return 'lol title'
-
-
-def main(link, artist, title):
+def main(link, artist, title, album):
     album = 'Youtube Uploads'
     try:
         temp_path = tempfile.mkdtemp()
         downloaded_file = download(link, temp_path)
-        if title is None:
-            title = get_title(link)
+        title, artist, album = get_song_info(downloaded_file, title, artist, album)
         tag_file(downloaded_file, title, artist,  album)
         upload(downloaded_file)
     finally:
@@ -82,12 +98,10 @@ if __name__ == '__main__':
 #                        help='Increase verbosity of output',
 #                        action='count')
     parser.add_argument('link', help='Link to youtube video to be used')
-    parser.add_argument('-a', '--artist',
-                        default='Unknown',
-                        help='Default: Unknown')
-    parser.add_argument('-t', '--title',
-                        help='Default: Video title')
+    parser.add_argument('-a', '--artist')
+    parser.add_argument('-b', '--album')
+    parser.add_argument('-t', '--title')
 
     args = parser.parse_args()
 
-    main(args.link, args.artist, args.title)
+    main(args.link, args.artist, args.title, args.album)

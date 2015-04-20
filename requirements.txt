@@ -1,4 +1,10 @@
+# Non-python requirements:
+# ffmpeg
+# chromaprint
+
+# Python requirements:
 protobuf==2.5.0
 gmusicapi
 mutagen
+pyacoustid
 youtube_dl
