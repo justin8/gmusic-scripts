@@ -17,6 +17,7 @@ import mutagen.id3
 
 from gmwrapper import MusicManagerWrapper
 
+
 ACOUSTID_API_KEY = 'TjNRZRtM'
 
 
@@ -50,10 +51,7 @@ def tag_file(file_path, title, artist, album):
         title = title.decode('utf-8')
     if isinstance(album, str):
         album = album.decode('utf-8')
-    print("Tagging with:\n" +
-          "    Artist: %s\n" % artist +
-          "    Title: %s\n" % title +
-          "    Album: %s" % album)
+    print("Tagging song...")
 
     mp3file['artist'] = artist
     mp3file['title'] = title
@@ -61,18 +59,28 @@ def tag_file(file_path, title, artist, album):
     mp3file.save()
 
 
-def get_song_info(file_path, title, artist, album):
+def get_song_info(file_path, title, artist, album, link):
     album = 'Youtube' if album is None else album
     if not title or not artist:
         match = acoustid.match(ACOUSTID_API_KEY, file_path)
-        result = match.next()
-        artist = result[3] if artist is None else artist
-        title = result[2] if title is None else title
+        try:
+            result = match.next()
+            artist = result[3] if artist is None else artist
+            title = result[2] if title is None else title
+        except:
+            artist = 'Unknown' if artist is None else artist
+            title = get_youtube_title(link) if title is None else title
     print("Found song info:\n" +
           "    Artist: %s\n" % artist +
           "    Title: %s\n" % title +
           "    Album: %s" % album)
     return [title, artist, album]
+
+
+def get_youtube_title(link):
+    ydl = youtube_dl.YoutubeDL()
+    result = ydl.extract_info(link, download=False)
+    return result['title']
 
 
 def upload(file_path):
@@ -87,7 +95,7 @@ def main(link, artist, title, album):
     try:
         temp_path = tempfile.mkdtemp()
         downloaded_file = download(link, temp_path)
-        title, artist, album = get_song_info(downloaded_file, title, artist, album)
+        title, artist, album = get_song_info(downloaded_file, title, artist, album, link)
         tag_file(downloaded_file, title, artist,  album)
         upload(downloaded_file)
     finally:
@@ -97,10 +105,16 @@ def main(link, artist, title, album):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+
+    parser.description = ('Import the provided youtube link/ID to your Google Music account\n' +
+                          'Default album will be "Youtube"\n' +
+                          'Default artist/title will be discovered via acoustID.\n' +
+                          'If no match is found via acoustID the Youtube title will be used\n' +
+                          'with "Unknown" as the artist')
 #    parser.add_argument('-v', '--verbose',
 #                        help='Increase verbosity of output',
 #                        action='count')
-    parser.add_argument('link', help='Link to youtube video to be used')
+    parser.add_argument('link', help='Link (or just the ID) to youtube video to be used')
     parser.add_argument('-a', '--artist')
     parser.add_argument('-b', '--album')
     parser.add_argument('-t', '--title')
