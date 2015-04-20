@@ -7,7 +7,6 @@ from __future__ import unicode_literals, print_function
 import argparse
 import re
 import shutil
-import subprocess
 import tempfile
 
 import youtube_dl
@@ -20,22 +19,18 @@ from gmwrapper import MusicManagerWrapper
 
 def download(link, temp_path):
     ydl_opts = {'format': '141/140/171',
-                'outtmpl': temp_path + '/%(autonumber)s.%(ext)s'}
+                'outtmpl': temp_path + '/%(autonumber)s.%(ext)s',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '320',
+                }],
+                }
 
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         ydl.download([link])
     # TODO: Check file extension!
-    return temp_path + '/00001.m4a'
-
-
-def convert_to_mp3(temp_path, input_file):
-    converted_file = temp_path + '/' + re.findall('.*/(.*)\..*$', input_file)[0] + '.mp3'
-    result = subprocess.call(['ffmpeg', '-y', '-i', input_file, '-ab', '320k', converted_file])
-    if result is not 0:
-        print("Failed to convert file to mp3!")
-        raise Exception('Failed to convert mp3')
-
-    return converted_file
+    return temp_path + '/00001.mp3'
 
 
 def tag_file(file_path, title, artist, album):
@@ -64,7 +59,7 @@ def upload(file_path):
 
 def get_title(link):
     # TODO: Find 'get-title' option in youtube_dl
-    pass
+    return 'lol title'
 
 
 def main(link, artist, title):
@@ -72,13 +67,13 @@ def main(link, artist, title):
     try:
         temp_path = tempfile.mkdtemp()
         downloaded_file = download(link, temp_path)
-        converted_file = convert_to_mp3(temp_path, downloaded_file)
         if title is None:
             title = get_title(link)
-        tag_file(converted_file, title, artist,  album)
-        upload(converted_file)
+        tag_file(downloaded_file, title, artist,  album)
+        upload(downloaded_file)
     finally:
-        shutil.rmtree(temp_path)
+        pass
+        #shutil.rmtree(temp_path)
 
 
 if __name__ == '__main__':
