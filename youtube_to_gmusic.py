@@ -5,7 +5,6 @@
 from __future__ import unicode_literals, print_function
 
 import argparse
-import re
 import shutil
 import tempfile
 import requests
