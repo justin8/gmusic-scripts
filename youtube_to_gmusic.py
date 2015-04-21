@@ -22,7 +22,6 @@ from gmwrapper import MusicManagerWrapper
 
 
 requests.packages.urllib3.disable_warnings()
-ACOUSTID_API_KEY = 'TjNRZRtM'
 VERBOSE = False
 
 
@@ -71,9 +70,15 @@ def tag_file(file_path, title, artist, album):
 
 
 def get_song_info(file_path, title, artist, album, link):
+    try:
+        with open('acoustid-api-key', 'r') as f:
+            acoustid_api_key = f.read().strip('\n')
+    except IOError:
+        print('You must provide an AcoustID API key on a single line in the file "acoustid-api-key".')
+        sys.exit(1)
     album = 'Youtube' if album is None else album
     if not title or not artist:
-        match = acoustid.match(ACOUSTID_API_KEY, file_path)
+        match = acoustid.match(acoustid_api_key, file_path)
         try:
             result = match.next()
             artist = result[3] if artist is None else artist
