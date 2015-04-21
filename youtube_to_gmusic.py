@@ -97,21 +97,23 @@ def get_youtube_title(link):
     return result['title']
 
 
-def upload(file_path):
-    if not hasattr(upload, 'mmw'):
-        upload.mmw = MusicManagerWrapper()
-        upload.mmw.login()
-    upload.mmw.upload(file_path)
+def upload(file_path, oauth):
+    if not oauth:
+        # Use mmw to wrap requests
+        if not hasattr(upload, 'mmw'):
+            upload.mmw = MusicManagerWrapper()
+            upload.mmw.login()
+        upload.mmw.upload(file_path)
 
 
-def process_link(link, artist, title, album):
+def process_link(link, artist, title, album, oauth=None):
     album = 'Youtube Uploads'
     try:
         temp_path = tempfile.mkdtemp()
         downloaded_file = download(link, temp_path)
         title, artist, album = get_song_info(downloaded_file, title, artist, album, link)
         tag_file(downloaded_file, title, artist,  album)
-        upload(downloaded_file)
+        upload(downloaded_file, oauth)
     finally:
         shutil.rmtree(temp_path)
 
