@@ -1,6 +1,6 @@
 # Non-python requirements:
-# ffmpeg
-# chromaprint
+# ffmpeg (or libav-tools on ubuntu)
+# chromaprint (libchromaprint0 on ubuntu)
 
 # Python requirements:
 protobuf==2.5.0

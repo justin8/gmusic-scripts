@@ -1,7 +1,5 @@
 #!/usr/bin/env python2
 
-# TODO: Cover up download, conversion and upload unless set to verbose
-
 from __future__ import unicode_literals, print_function
 
 import argparse
@@ -18,7 +16,7 @@ from apiclient.discovery import build
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
 
-from gmwrapper import MusicManagerWrapper
+from gmwrapper.gmwrapper import MusicManagerWrapper
 
 
 requests.packages.urllib3.disable_warnings()
