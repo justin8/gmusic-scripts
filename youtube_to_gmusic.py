@@ -127,10 +127,10 @@ def upload(file_path, oauth):
             print("Uploaded successfully!")
         else:
             if 'ALREADY_EXISTS' in not_uploaded[file_path]:
-                print("Failed to upload file. Already exists.")
+                raise Exception("Failed to upload file. Already exists.")
 
 
-def process_link(link, artist, title, album, oauth=None):
+def process_link(link, artist=None, title=None, album=None, oauth=None):
     album = 'Youtube Uploads'
     try:
         temp_path = tempfile.mkdtemp()
@@ -138,6 +138,8 @@ def process_link(link, artist, title, album, oauth=None):
         title, artist, album = get_song_info(downloaded_file, title, artist, album, link)
         tag_file(downloaded_file, title, artist,  album)
         upload(downloaded_file, oauth)
+    except Exception as e:
+        raise e
     finally:
         shutil.rmtree(temp_path)
 
@@ -163,7 +165,7 @@ def search_for_id(search):
     return video_id
 
 
-def process_search(search, artist, title, album):
+def process_search(search, artist=None, title=None, album=None):
     video_id = search_for_id(search)
     process_link(video_id, artist, title, album)
 
