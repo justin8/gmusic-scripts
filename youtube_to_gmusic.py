@@ -10,13 +10,13 @@ import sys
 from exceptions import IOError
 
 import acoustid
-import youtube_dl
 import mutagen.id3
+import youtube_dl
 from apiclient.discovery import build
+from gmusicapi import CallFailure
+from gmusicapi.clients import Musicmanager
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
-
-from gmwrapper.gmwrapper import MusicManagerWrapper
 
 
 requests.packages.urllib3.disable_warnings()
@@ -82,6 +82,7 @@ def get_song_info(file_path, title, artist, album, link):
             artist = result[3] if artist is None else artist
             title = result[2] if title is None else title
         except:
+            print("Unable to match via AcoustID! Falling back to video title")
             artist = 'Unknown' if artist is None else artist
             title = get_youtube_title(link) if title is None else title
     vprint("Found song info:\n" +
@@ -97,13 +98,36 @@ def get_youtube_title(link):
     return result['title']
 
 
+def gm_login(oauth):
+    if not hasattr(gm_login, 'api'):
+        gm_login.api = Musicmanager(debug_logging=VERBOSE)
+    if not gm_login.api.is_authenticated():
+        if not gm_login.api.login():
+            try:
+                gm_login.api.perform_oauth()
+            except:
+                print("Unable to login with specified oauth code.")
+            gm_login.api.login()
+    return gm_login.api
+
+
 def upload(file_path, oauth):
-    if not oauth:
-        # Use mmw to wrap requests
-        if not hasattr(upload, 'mmw'):
-            upload.mmw = MusicManagerWrapper()
-            upload.mmw.login()
-        upload.mmw.upload(file_path)
+    # TODO: Report song being uploaded? 'artist - title'?
+    print("Uploading...")
+    api = gm_login(oauth)
+
+    try:
+        # Can set enable_matching on the api.upload call but apparently requires avconv
+        # matching appears to suck. acoustID is more accurate
+        uploaded, matched, not_uploaded = api.upload(file_path, enable_matching=False)
+    except CallFailure as e:
+        print("Failed to upload: %s" % e)
+    else:
+        if uploaded:
+            print("Uploaded successfully!")
+        else:
+            if 'ALREADY_EXISTS' in not_uploaded[file_path]:
+                print("Failed to upload file. Already exists.")
 
 
 def process_link(link, artist, title, album, oauth=None):
