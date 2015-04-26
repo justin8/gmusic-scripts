@@ -71,3 +71,4 @@ target/
 *.m4a
 *.mp[34]
 settings
+credentials
