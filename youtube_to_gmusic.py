@@ -15,7 +15,7 @@ import mutagen.id3
 import youtube_dl
 from apiclient.discovery import build
 from gmusicapi import CallFailure
-from gmusicapi.clients import Musicmanager
+from gmusicapi.clients import Musicmanager, OAUTH_FILEPATH
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
 
@@ -102,23 +102,25 @@ def get_youtube_title(link):
     return result['title']
 
 
-def gm_login(oauth):
+def gm_login(credentials):
     if not hasattr(gm_login, 'api'):
+        # Stored api connection for multiple upload support without re-authing every time
         gm_login.api = Musicmanager(debug_logging=VERBOSE)
+    # Credential pass through is working here
     if not gm_login.api.is_authenticated():
-        if not gm_login.api.login():
+        if not gm_login.api.login(OAUTH_FILEPATH if not credentials else credentials):
             try:
                 gm_login.api.perform_oauth()
             except:
                 print("Unable to login with specified oauth code.")
-            gm_login.api.login()
+            gm_login.api.login(OAUTH_FILEPATH if not credentials else credentials)
     return gm_login.api
 
 
-def upload(file_path, oauth):
+def upload(file_path, credentials):
     # TODO: Report song being uploaded? 'artist - title'?
     print("Uploading...")
-    api = gm_login(oauth)
+    api = gm_login(credentials)
 
     try:
         # Can set enable_matching on the api.upload call but apparently requires avconv
@@ -134,14 +136,14 @@ def upload(file_path, oauth):
                 raise Exception("Failed to upload file. Already exists.")
 
 
-def process_link(link, artist=None, title=None, album=None, oauth=None):
+def process_link(link, artist=None, title=None, album=None, credentials=None):
     album = 'Youtube Uploads'
     try:
         temp_path = tempfile.mkdtemp()
         downloaded_file = download(link, temp_path)
         title, artist, album = get_song_info(downloaded_file, title, artist, album, link)
         tag_file(downloaded_file, title, artist,  album)
-        upload(downloaded_file, oauth)
+        upload(downloaded_file, credentials)
     except Exception as e:
         raise e
     finally:
