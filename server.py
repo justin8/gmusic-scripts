@@ -42,9 +42,21 @@ credential_store = 'credentials'
 
 @app.route("/process", methods=['POST', 'GET'])
 def process():
+    if 'redirect' in session and session['redirect']:
+        session['redirect'] = False
+        data = session['request']
+    elif request.json:
+        data = request.json
+    elif request.args:
+        data = request.args
+    elif request.form:
+        data = request.form
+    else:
+        return jsonify({'error': 'No link or search parameters were specified.'}), 400
+
     if 'user' not in session or not session['user']:
         session['redirect'] = True
-        session['request'] = request.form
+        session['request'] = data
         return redirect('/login', code=301)
     else:
         store = get_credential_storage(credential_store,
@@ -56,12 +68,6 @@ def process():
     if not credentials:
         return jsonify({'error': 'No user credentials found'}), 500
 
-    if session['redirect']:
-        print('%r' % session['request'])
-        session['redirect'] = False
-        data = session['request']
-    else:
-        data = request.form
     if 'link' not in data and 'search' not in data:
         return jsonify({'error': 'No link or search term was specified!'}), 400
         abort(400)
@@ -73,7 +79,7 @@ def process():
             youtube_to_gmusic.process_search(data['search'], credentials=credentials)
         else:
             raise(Exception("This shouldn't happen!"))
-        return jsonify({}), 200
+        return jsonify({'details': 'success!'}), 200
     except Exception as e:
         return jsonify({'error': e.message}), 400
 
