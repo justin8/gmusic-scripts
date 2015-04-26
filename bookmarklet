@@ -1,0 +1,1 @@
+javascript:(function(){location.href='http://afzelia.dray.be:5000/process?link='+encodeURIComponent(location.href);})();
