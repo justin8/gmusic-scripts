@@ -4,6 +4,8 @@
 
 # Python requirements:
 protobuf==2.5.0
+cherrypy
+flask
 gmusicapi
 google-api-python-client
 mutagen
