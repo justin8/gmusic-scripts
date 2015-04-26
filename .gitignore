@@ -70,5 +70,4 @@ target/
 
 *.m4a
 *.mp[34]
-acoustid-api-key
-google-api-key
+settings

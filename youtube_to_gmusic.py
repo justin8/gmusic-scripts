@@ -3,6 +3,7 @@
 from __future__ import unicode_literals, print_function
 
 import argparse
+import json
 import shutil
 import tempfile
 import requests
@@ -21,6 +22,15 @@ from mutagen.easyid3 import EasyID3
 
 requests.packages.urllib3.disable_warnings()
 VERBOSE = False
+try:
+    with file('settings', 'r') as f:
+        settings = json.load(f)
+        # Load to local variables directly so that any missing settings are detected at the start
+        acoustid_api_key = settings['acoustid_api_key']
+        google_api_key = settings['google_api_key']
+except Exception as e:
+    print('Error loading settings file!')
+    raise(e)
 
 
 def vprint(line):
@@ -68,12 +78,6 @@ def tag_file(file_path, title, artist, album):
 
 
 def get_song_info(file_path, title, artist, album, link):
-    try:
-        with open('acoustid-api-key', 'r') as f:
-            acoustid_api_key = f.read().strip('\n')
-    except IOError:
-        print('You must provide an AcoustID API key on a single line in the file "acoustid-api-key".')
-        sys.exit(1)
     album = 'Youtube' if album is None else album
     if not title or not artist:
         match = acoustid.match(acoustid_api_key, file_path)
@@ -146,12 +150,6 @@ def process_link(link, artist=None, title=None, album=None, oauth=None):
 
 def search_for_id(search):
     print('Searching for video...')
-    try:
-        with open('google-api-key', 'r') as f:
-            google_api_key = f.read().strip('\n')
-    except IOError:
-        print('You must provide a server Google API key on a single line in the file "google-api-key".')
-        sys.exit(1)
 
     youtube = build('youtube', 'v3', developerKey=google_api_key)
     search_response = youtube.search().list(q=search, part='id,snippet', maxResults=1).execute()
