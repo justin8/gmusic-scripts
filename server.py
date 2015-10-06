@@ -15,6 +15,8 @@ try:
         # Load to local variables directly so that any missing settings are detected at the start
         app_secret_key = settings['app_secret_key']
         client_secret = settings['client_secret']
+        redirect_uri = settings['redirect_uri']
+        user_agent = settings['user_agent']
         client_id = settings['client_id']
 except Exception as e:
     print('Error loading settings file!')
@@ -28,12 +30,12 @@ app.secret_key = app_secret_key
 
 oauth_app_creds = {
     "client_secret": client_secret,
-    "redirect_uri": "http://afzelia.dray.be:5000/oauth2callback",
+    "redirect_uri": redirect_uri,
     "client_id": client_id,
     "scope": ["https://www.googleapis.com/auth/musicmanager",
               "https://www.googleapis.com/auth/userinfo.email",
               "https://www.googleapis.com/auth/userinfo.profile"],
-    "user_agent": "afzelia/1.0",
+    "user_agent": user_agent,
     "access_type": "offline",
 }
 

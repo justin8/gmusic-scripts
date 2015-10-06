@@ -25,7 +25,10 @@ try:
         settings = json.load(f)
         # Load to local variables directly so that any missing settings are detected at the start
         acoustid_api_key = settings['acoustid_api_key']
-        google_api_key = settings['google_api_key']
+        try:
+            google_api_key = settings['google_api_key']
+        except:
+            google_api_key = None
 except Exception as e:
     print('Error loading settings file!')
     raise(e)
@@ -154,6 +157,9 @@ def process_link(link, artist=None, title=None, album=None, credentials=None):
 
 def search_for_id(search):
     print('Searching for video...')
+
+    if not google_api_key:
+        raise Exception('No google_api_key found in settings')
 
     youtube = build('youtube', 'v3', developerKey=google_api_key)
     search_response = youtube.search().list(q=search, part='id,snippet', maxResults=1).execute()
