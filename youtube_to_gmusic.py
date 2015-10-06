@@ -7,8 +7,6 @@ import json
 import shutil
 import tempfile
 import requests
-import sys
-from exceptions import IOError
 
 import acoustid
 import mutagen.id3
@@ -120,7 +118,8 @@ def gm_login(credentials):
 def upload(file_path, credentials):
     # TODO: Report song being uploaded? 'artist - title'?
     print("Uploading...")
-    vprint("File is: '%s'. User is: '%s'." % (file_path, credentials.id_token['email']))
+    email = credentials.id_token['email'] if credentials else '--'
+    vprint("File is: '%s'. User is: '%s'." % (file_path, email))
     api = gm_login(credentials)
 
     try:
@@ -140,7 +139,8 @@ def upload(file_path, credentials):
 def process_link(link, artist=None, title=None, album=None, credentials=None):
     album = 'Youtube Uploads'
     try:
-        vprint("Starting to process link '%s' for user '%s'" % (link, credentials.id_token['email']))
+        email = credentials.id_token['email'] if credentials else '--'
+        vprint("Starting to process link '%s' for user '%s'" % (link, email))
         temp_path = tempfile.mkdtemp()
         downloaded_file = download(link, temp_path)
         title, artist, album = get_song_info(downloaded_file, title, artist, album, link)
